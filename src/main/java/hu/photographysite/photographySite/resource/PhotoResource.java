@@ -1,10 +1,8 @@
 package hu.photographysite.photographySite.resource;
 
 import hu.photographysite.photographySite.model.Photo;
-import hu.photographysite.photographySite.repository.PhotoRepository;
 import hu.photographysite.photographySite.service.PhotoService;
 import net.bytebuddy.utility.RandomString;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,30 +14,29 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 
 @RestController
 public class PhotoResource {
 
     private String uploadDirectory = "C:\\Programming\\+project\\PhotographySiteBackend-spring-\\src\\main\\resources\\static\\";
+    private PhotoService photoService;
 
-    @Autowired
-    private PhotoRepository photoRepository;
-
-    private PhotoService photoService = new PhotoService();
+    public PhotoResource(PhotoService photoService) {
+        this.photoService = photoService;
+    }
 
     @GetMapping("/")
     private List<Photo> getAll() {
-        return photoRepository.findAll();
+        return photoService.getAllPhotos();
     }
 
 
     @PostMapping("/upload")
-    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
-        return saveFile(file);
+    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file, @RequestParam String category) throws IOException {
+        return saveFile(file, category);
     }
 
-    private ResponseEntity saveFile(MultipartFile file) throws IOException {
+    private ResponseEntity saveFile(MultipartFile file, String category) throws IOException {
         String originalFileName = file.getOriginalFilename();
         String filename = RandomString.make(12);
         String[] splittedFileName = Objects.requireNonNull(file.getOriginalFilename()).split("[.]");
@@ -52,7 +49,10 @@ public class PhotoResource {
         Path path = Paths.get(uploadDirectory + filename + "." + fileExtension);
         Files.write(path, bytes);
 
-         return ResponseEntity.status(HttpStatus.ACCEPTED).body(null);
+        Photo entity = new Photo(originalFileName, filename + "." + fileExtension, category);
+        photoService.savePhoto(entity);
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(null);
     }
 
 }

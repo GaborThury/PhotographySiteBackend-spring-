@@ -22,6 +22,12 @@ public class Photo {
 
     }
 
+    public Photo(String title, String url, String category) {
+        this.title = title;
+        this.url = url;
+        this.category = category;
+    }
+
     public Integer getId() {
         return id;
     }
